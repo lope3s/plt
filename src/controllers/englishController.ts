@@ -43,6 +43,14 @@ class EnglishController {
 
     return `Translation registered.`;
   }
+
+  async queryWord(word: string) {
+    const wordFound = await this.enInjector.queryWord(word);
+
+    if (wordFound.length) return wordFound[0];
+
+    return 'Word not found.';
+  }
 }
 
 export default EnglishController;

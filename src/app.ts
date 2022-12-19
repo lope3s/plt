@@ -25,7 +25,7 @@ app
 
 app
   .command('addPt')
-  .description('Add a Portuguese word')
+  .description('Add a Portuguese word.')
   .argument('<ptWords...>')
   .action(async (ptWords) => {
     const alreadyRegisteredWords: string[] = [];
@@ -50,7 +50,7 @@ app
 
 app
   .command('addEn')
-  .description('Add a English word')
+  .description('Add a English word.')
   .argument('<ptWord>')
   .argument('<enWords...>')
   .action(async (ptWord, enWords) => {
@@ -81,9 +81,12 @@ app
 
 app
   .command('updatePt')
-  .description('Update a Portuguese word')
+  .description('Update a Portuguese word.')
   .argument('<ptWordSearch>')
-  .option('-nv, --new-value <value>', 'Update the word with the provided value')
+  .option(
+    '-nv, --new-value <value>',
+    'Update the word with the provided value.'
+  )
   .action(async (ptWordSearch, opt) => {
     const wordRegistered = await portugueseController.updateWord(
       ptWordSearch,
@@ -95,9 +98,9 @@ app
 
 app
   .command('updateEn')
-  .description('Update a English word')
+  .description('Update a English word.')
   .argument('<enWordSearch>')
-  .option('-u, --update <value>', 'Update registered word')
+  .option('-u, --update <value>', 'Update registered word.')
   .option(
     '-a, --append <ptWords...>',
     'Append Portuguese words to possible translations of the word.'
@@ -137,6 +140,43 @@ app
       );
 
       return console.log(wordRegistered);
+    }
+  });
+
+app
+  .command('searchWord')
+  .description(
+    "Search for a portuguese or english word and it's translations, default search for english words."
+  )
+  .argument('<word>')
+  .requiredOption(
+    '-l, --language <pt | en>',
+    'Select between pt or en to search for translations. Default value <en>',
+    'en'
+  )
+  .action(async (word, opt, a) => {
+    if (opt.language === 'pt') {
+      const enWord = await englishController.queryWord(word);
+
+      if (typeof enWord === 'string') return console.log(enWord);
+
+      console.log(`Possible translations for ${word}:`);
+
+      for (const ptWord of enWord.ptWords) {
+        console.log(`\n${ptWord.ptWord}`);
+      }
+    }
+
+    if (opt.language === 'en') {
+      const ptWord = await portugueseController.queryWord(word);
+
+      if (typeof ptWord === 'string') return console.log(ptWord);
+
+      console.log(`Possible translations for ${word}:`);
+
+      for (const enWord of ptWord.enWords) {
+        console.log(`\n${enWord.word}`);
+      }
     }
   });
 

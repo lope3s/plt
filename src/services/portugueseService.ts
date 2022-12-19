@@ -43,6 +43,34 @@ class PortugueseService {
       }
     );
   }
+
+  async queryWord(word: string) {
+    return await this.coll
+      .aggregate([
+        {
+          $match: {
+            ptWord: word.toLowerCase(),
+          },
+        },
+        {
+          $lookup: {
+            from: 'enWords',
+            localField: '_id',
+            foreignField: 'ptWords',
+            as: 'enWords',
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            enWords: {
+              _id: 0,
+            },
+          },
+        },
+      ])
+      .toArray();
+  }
 }
 
 export default PortugueseService;

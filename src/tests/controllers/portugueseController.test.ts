@@ -15,6 +15,7 @@ describe('Testing portugueseController', () => {
       upsertedCount: 0,
       upsertedId: null,
     })),
+    queryWord: null,
   };
 
   const coll: any = {
@@ -28,7 +29,7 @@ describe('Testing portugueseController', () => {
     const keys = Object.keys(ptInjector);
 
     for (const key of keys) {
-      ptInjector[key].mockClear();
+      ptInjector[key]?.mockClear();
     }
   });
 
@@ -103,6 +104,35 @@ describe('Testing portugueseController', () => {
       });
 
       expect(data).toBe('teste updated.');
+    });
+  });
+
+  describe('Testing queryWord method', () => {
+    it('Should call the ptInjector queryWord method', async () => {
+      ptInjector.queryWord = jest.fn(async () => []);
+      await portugueseController.queryWord('CHÃO');
+
+      expect(ptInjector.queryWord).toBeCalledTimes(1);
+      expect(ptInjector.queryWord).toBeCalledWith('CHÃO');
+    });
+
+    it('Should return a string telling that the word was not found if no data is returned from the query', async () => {
+      ptInjector.queryWord = jest.fn(async () => []);
+      const returnedData = await portugueseController.queryWord('CHÃO');
+
+      expect(returnedData).toBe('CHÃO not found.');
+    });
+
+    it('Should return the first value returned from the injector if the query return any data', async () => {
+      ptInjector.queryWord = jest.fn(async () => [
+        { ptWord: 'chão', enWords: [{ word: 'ground' }] },
+      ]);
+      const returnedData = await portugueseController.queryWord('CHÃO');
+
+      expect(returnedData).toStrictEqual({
+        ptWord: 'chão',
+        enWords: [{ word: 'ground' }],
+      });
     });
   });
 });

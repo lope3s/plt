@@ -34,6 +34,14 @@ class PortugueseController {
 
     return `${ptWordSearch} updated.`;
   }
+
+  async queryWord(word: string) {
+    const searchedWord = await this.ptInjector.queryWord(word);
+
+    if (!searchedWord.length) return `${word} not found.`;
+
+    return searchedWord[0];
+  }
 }
 
 export default PortugueseController;

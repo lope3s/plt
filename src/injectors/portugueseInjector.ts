@@ -21,6 +21,11 @@ class PortugueseInjector {
     const ptService = new PortugueseService(db.collection('ptWords'));
     return await ptService.updateWord(ptWordSearch, ptWordUpdate);
   }
+
+  static async queryWord(word: string) {
+    const ptService = new PortugueseService(db.collection('ptWords'));
+    return await ptService.queryWord(word);
+  }
 }
 
 export default PortugueseInjector;

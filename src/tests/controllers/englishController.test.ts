@@ -49,6 +49,7 @@ describe('Testing English Controller', () => {
         upsertedId: null,
       })
     ),
+    queryWord: null,
   };
 
   const englishController = new EnglishController(coll, enInjector);
@@ -172,6 +173,47 @@ describe('Testing English Controller', () => {
       );
 
       expect(data).toBe('Translation registered.');
+    });
+  });
+
+  describe('Testing queryWord method', () => {
+    it('Should call the injector queryWord method', async () => {
+      enInjector.queryWord = jest.fn(async () => []);
+      await englishController.queryWord('ground');
+
+      expect(enInjector.queryWord).toBeCalledTimes(1);
+      expect(enInjector.queryWord).toBeCalledWith('ground');
+    });
+
+    it('Should return a string telling that the word was not found if the service return a 0 length array', async () => {
+      enInjector.queryWord = jest.fn(async () => []);
+      const result = await englishController.queryWord('ground');
+
+      expect(result).toBe('Word not found.');
+    });
+
+    it('Should return the first value of the array returned by the injector if the word is registered', async () => {
+      enInjector.queryWord = jest.fn(async () => [
+        {
+          word: 'ground',
+          ptWords: [
+            {
+              ptWord: 'chão',
+            },
+          ],
+        },
+      ]);
+
+      const result = await englishController.queryWord('ground');
+
+      expect(result).toStrictEqual({
+        word: 'ground',
+        ptWords: [
+          {
+            ptWord: 'chão',
+          },
+        ],
+      });
     });
   });
 });

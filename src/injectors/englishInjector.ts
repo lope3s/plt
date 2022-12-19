@@ -29,6 +29,11 @@ class EnglishInjector {
     const enService = new EnglishService(db.collection('enWords'));
     return await enService.appendTranslation(enWordId, ptWordId);
   }
+
+  static async queryWord(word: string) {
+    const enService = new EnglishService(db.collection('enWords'));
+    return await enService.queryWord(word);
+  }
 }
 
 export default EnglishInjector;

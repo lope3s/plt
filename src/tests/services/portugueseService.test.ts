@@ -21,6 +21,7 @@ describe('Testing Portuguese Service', () => {
       })
     ),
     findOne: null,
+    aggregate: jest.fn(() => ({ toArray: async () => [] })),
   };
 
   afterEach(() => {
@@ -94,6 +95,37 @@ describe('Testing Portuguese Service', () => {
           },
         }
       );
+    });
+  });
+
+  describe('Testing queryWord method', () => {
+    it('Should call aggregate method', async () => {
+      await portugueseService.queryWord('CHÃO');
+
+      expect(coll.aggregate).toBeCalledTimes(1);
+      expect(coll.aggregate).toBeCalledWith([
+        {
+          $match: {
+            ptWord: 'chão',
+          },
+        },
+        {
+          $lookup: {
+            from: 'enWords',
+            localField: '_id',
+            foreignField: 'ptWords',
+            as: 'enWords',
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            enWords: {
+              _id: 0,
+            },
+          },
+        },
+      ]);
     });
   });
 });

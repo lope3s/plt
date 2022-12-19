@@ -56,6 +56,34 @@ class EnglishService {
       }
     );
   }
+
+  async queryWord(word: string) {
+    return await this.coll
+      .aggregate([
+        {
+          $match: {
+            word: word.toLowerCase(),
+          },
+        },
+        {
+          $lookup: {
+            from: 'ptWords',
+            localField: 'ptWords',
+            foreignField: '_id',
+            as: 'ptWords',
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            ptWords: {
+              _id: 0,
+            },
+          },
+        },
+      ])
+      .toArray();
+  }
 }
 
 export default EnglishService;
