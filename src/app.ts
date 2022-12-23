@@ -151,11 +151,11 @@ app
   .argument('<word>')
   .requiredOption(
     '-l, --language <pt | en>',
-    'Select between pt or en to search for translations. Default value <en>',
+    'Select between pt or en to search for translations.',
     'en'
   )
   .action(async (word, opt, a) => {
-    if (opt.language === 'pt') {
+    if (opt.language === 'en') {
       const enWord = await englishController.queryWord(word);
 
       if (typeof enWord === 'string') return console.log(enWord);
@@ -167,7 +167,7 @@ app
       }
     }
 
-    if (opt.language === 'en') {
+    if (opt.language === 'pt') {
       const ptWord = await portugueseController.queryWord(word);
 
       if (typeof ptWord === 'string') return console.log(ptWord);
@@ -178,6 +178,8 @@ app
         console.log(`\n${enWord.word}`);
       }
     }
+
+    return
   });
 
 app.parse();
