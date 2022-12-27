@@ -1,10 +1,11 @@
+import { ObjectId } from 'mongodb';
 import db from '../config/db';
 import PortugueseWord from '../models/PortugueseWord';
 import PortugueseService from '../services/portugueseService';
 
 class PortugueseInjector {
-  static makeWord(ptWord: string) {
-    return new PortugueseWord(ptWord);
+  static makeWord(ptWord: string, categories: ObjectId[] = []) {
+    return new PortugueseWord(ptWord, categories);
   }
 
   static async addWord(ptWord: PortugueseWord) {
@@ -17,9 +18,17 @@ class PortugueseInjector {
     return await ptService.getWordId(ptWord);
   }
 
-  static async updateWord(ptWordSearch: string, ptWordUpdate: string) {
+  static async updateWord(
+    ptWordSearch: string,
+    ptWordUpdate: string,
+    categoriesToAdd: ObjectId[]
+  ) {
     const ptService = new PortugueseService(db.collection('ptWords'));
-    return await ptService.updateWord(ptWordSearch, ptWordUpdate);
+    return await ptService.updateWord(
+      ptWordSearch,
+      ptWordUpdate,
+      categoriesToAdd
+    );
   }
 
   static async queryWord(word: string) {

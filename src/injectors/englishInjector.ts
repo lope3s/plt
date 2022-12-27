@@ -4,8 +4,12 @@ import EnglishWord from '../models/EnglishWord';
 import EnglishService from '../services/englishService';
 
 class EnglishInjector {
-  static makeWord(word: string, ptWords: ObjectId[]) {
-    return new EnglishWord(word, ptWords);
+  static makeWord(
+    word: string,
+    ptWords: ObjectId[],
+    categories: ObjectId[] = []
+  ) {
+    return new EnglishWord(word, ptWords, categories);
   }
 
   static async addWord(enWord: EnglishWord) {
@@ -20,9 +24,13 @@ class EnglishInjector {
     return await enService.getWordId(enWord);
   }
 
-  static async updateWord(enWordSearch: string, enWord: string) {
+  static async updateWord(
+    enWordSearch: string,
+    enWord: string,
+    categoriesToAdd: ObjectId[]
+  ) {
     const enService = new EnglishService(db.collection('enWords'));
-    return await enService.updateWord(enWordSearch, enWord);
+    return await enService.updateWord(enWordSearch, enWord, categoriesToAdd);
   }
 
   static async appendTranslation(enWordId: ObjectId, ptWordId: ObjectId) {

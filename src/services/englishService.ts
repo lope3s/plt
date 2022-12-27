@@ -28,7 +28,11 @@ class EnglishService {
     });
   }
 
-  async updateWord(enWordSearch: string, enWord: string) {
+  async updateWord(
+    enWordSearch: string,
+    enWord: string,
+    categoriesToAdd: ObjectId[]
+  ) {
     return await this.coll.updateOne(
       {
         word: {
@@ -39,6 +43,9 @@ class EnglishService {
       {
         $set: {
           word: enWord.toLowerCase(),
+        },
+        $addToSet: {
+          categories: { $each: categoriesToAdd },
         },
       }
     );

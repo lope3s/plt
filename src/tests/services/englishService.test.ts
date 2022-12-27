@@ -40,7 +40,7 @@ describe('Testing English Service', () => {
         insertedId: new ObjectId(),
       }));
 
-      const enWord = new EnglishWord('foot', []);
+      const enWord = new EnglishWord('foot', [], []);
 
       const data = await englishService.addWord(enWord);
 
@@ -51,7 +51,7 @@ describe('Testing English Service', () => {
     it("Should call findOne to register word on db if it isn't already and return the registered data.", async () => {
       coll.findOne = jest.fn(async (data: object) => null);
 
-      const enWord = new EnglishWord('foot', []);
+      const enWord = new EnglishWord('foot', [], []);
 
       const data = await englishService.addWord(enWord);
 
@@ -74,13 +74,13 @@ describe('Testing English Service', () => {
 
   describe('Testing updateWord method', () => {
     it('Should call updateOne method', async () => {
-      await englishService.updateWord('foot', 'FEET');
+      await englishService.updateWord('foot', 'FEET', []);
 
       expect(coll.updateOne).toBeCalledTimes(1);
     });
 
     it('Should crerate the propper regex and transform received word to lower case before updating the resgistry', async () => {
-      await englishService.updateWord('foot', 'FEET');
+      await englishService.updateWord('foot', 'FEET', []);
 
       expect(coll.updateOne).toBeCalledWith(
         {
@@ -92,6 +92,9 @@ describe('Testing English Service', () => {
         {
           $set: {
             word: 'feet',
+          },
+          $addToSet: {
+            categories: { $each: [] },
           },
         }
       );

@@ -1,4 +1,4 @@
-import { Collection, Document } from 'mongodb';
+import { Collection, Document, ObjectId } from 'mongodb';
 import PortugueseWord from '../models/PortugueseWord';
 
 class PortugueseService {
@@ -28,7 +28,11 @@ class PortugueseService {
     return portugueseWord;
   }
 
-  async updateWord(ptWordSearch: string, ptWordUpdate: string) {
+  async updateWord(
+    ptWordSearch: string,
+    ptWordUpdate: string,
+    categoriesToAdd: ObjectId[]
+  ) {
     return await this.coll.updateOne(
       {
         ptWord: {
@@ -39,6 +43,9 @@ class PortugueseService {
       {
         $set: {
           ptWord: ptWordUpdate.toLowerCase(),
+        },
+        $addToSet: {
+          categories: { $each: categoriesToAdd },
         },
       }
     );

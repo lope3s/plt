@@ -1,29 +1,29 @@
-import WordCategoryInjector from "../injectors/wordCategoryInjector";
+import WordCategoryInjector from '../injectors/wordCategoryInjector';
 
 class WordCategoryController {
-    wrdCategoryInjector;
+  wrdCategoryInjector;
 
-    constructor(wrdCategoryInjector: typeof WordCategoryInjector) {
-        this.wrdCategoryInjector = wrdCategoryInjector;
-    }
+  constructor(wrdCategoryInjector: typeof WordCategoryInjector) {
+    this.wrdCategoryInjector = wrdCategoryInjector;
+  }
 
-    async addCategory(category: string) {
-        const ctgry = this.wrdCategoryInjector.makeCategory(category);
+  async addCategory(category: string) {
+    const ctgry = this.wrdCategoryInjector.makeCategory(category);
 
-        return await this.wrdCategoryInjector.addCategory(ctgry);
-    }
+    return await this.wrdCategoryInjector.addCategory(ctgry);
+  }
 
-    async queryCategories() {
-        return await this.wrdCategoryInjector.queryCategories();
-    }
+  async queryCategories(category?: string) {
+    return await this.wrdCategoryInjector.queryCategories(category);
+  }
 
-    async updateCategory(searchValue: string, newValue: string) {
-        return this.wrdCategoryInjector.updateCategory(searchValue, newValue);
-    }
+  async updateCategory(searchValue: string, newValue: string) {
+    return this.wrdCategoryInjector.updateCategory(searchValue, newValue);
+  }
 
-    async deleteCategory(category: string) {
-        return await this.wrdCategoryInjector.deleteCategory(category);
-    }
+  async deleteCategory(category: string) {
+    return await this.wrdCategoryInjector.deleteCategory(category);
+  }
 }
 
 export default WordCategoryController;

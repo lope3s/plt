@@ -1,8 +1,12 @@
+import { ObjectId } from 'mongodb';
+
 class PortugueseWord {
   ptWord;
+  categories;
 
-  constructor(ptWord: string) {
+  constructor(ptWord: string, categories: ObjectId[]) {
     this.ptWord = ptWord.toLowerCase();
+    this.categories = categories;
   }
 }
 
