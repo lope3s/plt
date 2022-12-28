@@ -1,15 +1,15 @@
-import { config } from 'dotenv';
+import { config } from "dotenv";
 
 config();
 
-import { Command } from 'commander';
-import PortugueseController from './controllers/portugueseController';
-import PortugueseInjector from './injectors/portugueseInjector';
-import EnglishController from './controllers/englishController';
-import EnglishInjector from './injectors/englishInjector';
-import WordCategoryController from './controllers/wordCategoryController';
-import WordCategoryInjector from './injectors/wordCategoryInjector';
-import { Document, ObjectId } from 'mongodb';
+import { Command } from "commander";
+import PortugueseController from "./controllers/portugueseController";
+import PortugueseInjector from "./injectors/portugueseInjector";
+import EnglishController from "./controllers/englishController";
+import EnglishInjector from "./injectors/englishInjector";
+import WordCategoryController from "./controllers/wordCategoryController";
+import WordCategoryInjector from "./injectors/wordCategoryInjector";
+import { Document, ObjectId } from "mongodb";
 
 const app = new Command();
 
@@ -18,339 +18,396 @@ const englishController = new EnglishController(EnglishInjector);
 
 const wordCategoryController = new WordCategoryController(WordCategoryInjector);
 
-app
-  .name('Personal Language Trainer - PLT\n')
-  .description('CLI to help expand english vocabulary');
+app.name("Personal Language Trainer - PLT\n").description(
+    "CLI to help expand english vocabulary"
+);
 
-app
-  .command('addPt')
-  .description('Add a Portuguese word.')
-  .argument('<ptWords...>')
-  .option(
-    '-ct, --category <value>',
-    'Will add the provided category to word category set, if caregory exists.'
-  )
-  .action(async (ptWords, { category }) => {
-    const alreadyRegisteredWords: string[] = [];
+app.command("addPt")
+    .description("Add a Portuguese word.")
+    .argument("<ptWords...>")
+    .option(
+        "-ct, --category <value>",
+        "Will add the provided category to word category set, if caregory exists."
+    )
+    .action(async (ptWords, { category }) => {
+        const alreadyRegisteredWords: string[] = [];
 
-    if (category) {
-      const [categoryRegistered] = await wordCategoryController.queryCategories(
-        category
-      );
+        if (category) {
+            const [categoryRegistered] =
+                await wordCategoryController.queryCategories(category);
 
-      if (!categoryRegistered) return console.log('Category not registered.');
+            if (!categoryRegistered)
+                return console.log("Category not registered.");
 
-      for (const ptWord of ptWords) {
-        const wordResgistered = await portugueseController.addWord(ptWord, [
-          categoryRegistered._id,
-        ]);
+            for (const ptWord of ptWords) {
+                const wordResgistered = await portugueseController.addWord(
+                    ptWord,
+                    [categoryRegistered._id]
+                );
 
-        if (!wordResgistered) alreadyRegisteredWords.push(ptWord.toLowerCase());
-      }
-    }
-
-    if (!category) {
-      for (const ptWord of ptWords) {
-        const wordResgistered = await portugueseController.addWord(ptWord);
-
-        if (!wordResgistered) alreadyRegisteredWords.push(ptWord.toLowerCase());
-      }
-    }
-
-    if (alreadyRegisteredWords.length)
-      console.log(
-        'The following words have already been registered: ',
-        alreadyRegisteredWords
-      );
-
-    console.log(
-      `Registered count: ${ptWords.length - alreadyRegisteredWords.length}`
-    );
-    return;
-  });
-
-app
-  .command('addEn')
-  .description('Add a English word.')
-  .argument('<ptWord>')
-  .argument('<enWords...>')
-  .option(
-    '-ct, --category <value>',
-    'Will add the provided category to word category set, if caregory exists.'
-  )
-  .action(async (ptWord, enWords, { category }) => {
-    const ptWordRegistered = await portugueseController.getWordId(ptWord);
-
-    if (!ptWordRegistered) return console.log(`${ptWord} is not registered.`);
-
-    const alreadyRegisteredWords: string[] = [];
-
-    if (category) {
-      const [categoryRegistered] = await wordCategoryController.queryCategories(
-        category
-      );
-
-      if (!categoryRegistered) return console.log('Category not registered.');
-
-      for (const enWord of enWords) {
-        const wordRegistered = await englishController.addWord(
-          enWord,
-          [ptWordRegistered._id],
-          [categoryRegistered._id]
-        );
-
-        if (!wordRegistered) alreadyRegisteredWords.push(enWord.toLowerCase());
-      }
-    }
-
-    if (!category) {
-      for (const enWord of enWords) {
-        const wordRegistered = await englishController.addWord(enWord, [
-          ptWordRegistered._id,
-        ]);
-
-        if (!wordRegistered) alreadyRegisteredWords.push(enWord.toLowerCase());
-      }
-    }
-
-    if (alreadyRegisteredWords.length)
-      return console.log(
-        'The following words are already registered: ',
-        alreadyRegisteredWords
-      );
-
-    return console.log(
-      `Registered count: ${enWords.length - alreadyRegisteredWords.length}`
-    );
-  });
-
-app
-  .command('updatePt')
-  .description('Update a Portuguese word.')
-  .argument('<ptWordSearch>')
-  .option(
-    '-nv, --new-value <value>',
-    'Update the word with the provided value.'
-  )
-  .option(
-    '-a, --append <categories...>',
-    'Append existing categories to word set of categories.'
-  )
-  .action(async (ptWordSearch, opt) => {
-    const notRegisteredCategories: string[] = [];
-
-    const categoriesToAdd: ObjectId[] = [];
-
-    if (opt.append) {
-      for (const category of opt.append) {
-        const [categoryRegistered] =
-          await wordCategoryController.queryCategories(category);
-
-        if (!categoryRegistered) notRegisteredCategories.push(category);
-
-        if (categoryRegistered) categoriesToAdd.push(categoryRegistered._id);
-      }
-    }
-
-    const wordRegistered: string = await portugueseController.updateWord(
-      ptWordSearch,
-      opt.newValue ? opt.newValue : { newValue: ptWordSearch },
-      categoriesToAdd
-    );
-
-    if (notRegisteredCategories.length) {
-      console.log(
-        "The following categories couldn't be added because they aren't registered:\n"
-      );
-
-      for (const notRegisteredCategory of notRegisteredCategories) {
-        console.log(notRegisteredCategory);
-      }
-
-      console.log();
-    }
-
-    return console.log(wordRegistered);
-  });
-
-app
-  .command('updateEn')
-  .description('Update a English word.')
-  .argument('<enWordSearch>')
-  .option('-u, --update <value>', 'Update registered word.')
-  .option(
-    '-a, --append <ptWords...>',
-    'Append Portuguese words to possible translations of the word.'
-  )
-  .option(
-    '-ac, --append-categories <categories...>',
-    'Append existing categories to word set of categories'
-  )
-  .action(async (enWordSearch, opt) => {
-    if (opt.append) {
-      const enWordId = await englishController.getWordId(enWordSearch);
-
-      if (!enWordId) return console.log(`${enWordSearch} is not registered.`);
-
-      const notRegisteredPtWords: string[] = [];
-
-      for (const ptWord of opt.append) {
-        const ptWordId = await portugueseController.getWordId(ptWord);
-
-        if (!ptWordId) {
-          notRegisteredPtWords.push(ptWord);
-          continue;
+                if (!wordResgistered)
+                    alreadyRegisteredWords.push(ptWord.toLowerCase());
+            }
         }
 
-        await englishController.appendTranslation(enWordId._id, ptWordId._id);
-      }
+        if (!category) {
+            for (const ptWord of ptWords) {
+                const wordResgistered = await portugueseController.addWord(
+                    ptWord
+                );
 
-      if (notRegisteredPtWords.length)
-        return console.log(
-          `The following words are not registered: `,
-          notRegisteredPtWords
-        );
+                if (!wordResgistered)
+                    alreadyRegisteredWords.push(ptWord.toLowerCase());
+            }
+        }
 
-      return console.log('Translations added');
-    }
+        if (alreadyRegisteredWords.length)
+            console.log(
+                "The following words have already been registered: ",
+                alreadyRegisteredWords
+            );
 
-    if (opt.update) {
-      const wordRegistered = await englishController.updateWord(
-        enWordSearch,
-        opt,
-        []
-      );
-
-      return console.log(wordRegistered);
-    }
-
-    if (opt.appendCategories) {
-      const notRegisteredCategories: string[] = [];
-
-      const categoriesToAdd: ObjectId[] = [];
-      for (const category of opt.appendCategories) {
-        const [categoryRegistered] =
-          await wordCategoryController.queryCategories(category);
-
-        if (!categoryRegistered) notRegisteredCategories.push(category);
-
-        if (categoryRegistered) categoriesToAdd.push(categoryRegistered._id);
-      }
-
-      const wordRegistered: string = await englishController.updateWord(
-        enWordSearch,
-        { update: enWordSearch },
-        categoriesToAdd
-      );
-
-      if (notRegisteredCategories.length) {
         console.log(
-          "The following categories couldn't be added because they aren't registered:\n"
+            `Registered count: ${
+                ptWords.length - alreadyRegisteredWords.length
+            }`
         );
+        return;
+    });
 
-        for (const notRegisteredCategory of notRegisteredCategories) {
-          console.log(notRegisteredCategory);
+app.command("addEn")
+    .description("Add a English word.")
+    .argument("<ptWord>")
+    .argument("<enWords...>")
+    .option(
+        "-ct, --category <value>",
+        "Will add the provided category to word category set, if caregory exists."
+    )
+    .action(async (ptWord, enWords, { category }) => {
+        const ptWordRegistered = await portugueseController.getWordId(ptWord);
+
+        if (!ptWordRegistered)
+            return console.log(`${ptWord} is not registered.`);
+
+        const alreadyRegisteredWords: string[] = [];
+
+        if (category) {
+            const [categoryRegistered] =
+                await wordCategoryController.queryCategories(category);
+
+            if (!categoryRegistered)
+                return console.log("Category not registered.");
+
+            for (const enWord of enWords) {
+                const wordRegistered = await englishController.addWord(
+                    enWord,
+                    [ptWordRegistered._id],
+                    [categoryRegistered._id]
+                );
+
+                if (!wordRegistered)
+                    alreadyRegisteredWords.push(enWord.toLowerCase());
+            }
         }
 
-        console.log();
-      }
+        if (!category) {
+            for (const enWord of enWords) {
+                const wordRegistered = await englishController.addWord(enWord, [
+                    ptWordRegistered._id,
+                ]);
 
-      return console.log(wordRegistered);
-    }
-  });
+                if (!wordRegistered)
+                    alreadyRegisteredWords.push(enWord.toLowerCase());
+            }
+        }
 
-app
-  .command('searchWord')
-  .description(
-    "Search for a portuguese or english word and it's translations, default search for english words."
-  )
-  .argument('<word>')
-  .requiredOption(
-    '-l, --language <pt | en>',
-    'Select between pt or en to search for translations.',
-    'en'
-  )
-  .action(async (word, opt, a) => {
-    if (opt.language === 'en') {
-      const enWord: Document | string = await englishController.queryWord(word);
+        if (alreadyRegisteredWords.length)
+            return console.log(
+                "The following words are already registered: ",
+                alreadyRegisteredWords
+            );
 
-      if (typeof enWord === 'string') return console.log(enWord);
+        return console.log(
+            `Registered count: ${
+                enWords.length - alreadyRegisteredWords.length
+            }`
+        );
+    });
 
-      console.log(`Possible translations for ${word}:`);
+app.command("updatePt")
+    .description("Update a Portuguese word.")
+    .argument("<ptWordSearch>")
+    .option(
+        "-nv, --new-value <value>",
+        "Update the word with the provided value."
+    )
+    .option(
+        "-a, --append <categories...>",
+        "Append existing categories to word set of categories."
+    )
+    .action(async (ptWordSearch, opt) => {
+        const notRegisteredCategories: string[] = [];
 
-      for (const ptWord of enWord.ptWords) {
-        console.log(`\n${ptWord.ptWord}`);
-      }
-    }
+        const categoriesToAdd: ObjectId[] = [];
 
-    if (opt.language === 'pt') {
-      const ptWord = await portugueseController.queryWord(word);
+        if (opt.append) {
+            for (const category of opt.append) {
+                const [categoryRegistered] =
+                    await wordCategoryController.queryCategories(category);
 
-      if (typeof ptWord === 'string') return console.log(ptWord);
+                if (!categoryRegistered) notRegisteredCategories.push(category);
 
-      console.log(`Possible translations for ${word}:`);
+                if (categoryRegistered)
+                    categoriesToAdd.push(categoryRegistered._id);
+            }
+        }
 
-      for (const enWord of ptWord.enWords) {
-        console.log(`\n${enWord.word}`);
-      }
-    }
+        const wordRegistered: string = await portugueseController.updateWord(
+            ptWordSearch,
+            opt.newValue ? opt.newValue : { newValue: ptWordSearch },
+            categoriesToAdd
+        );
 
-    return;
-  });
+        if (notRegisteredCategories.length) {
+            console.log(
+                "The following categories couldn't be added because they aren't registered:\n"
+            );
 
-app
-  .command('addCategory')
-  .description(
-    'Add new word categories that you can search for to train specific subjects of your vocabular.'
-  )
-  .argument('<category>')
-  .action(async (category) => {
-    const addedCategory = await wordCategoryController.addCategory(category);
+            for (const notRegisteredCategory of notRegisteredCategories) {
+                console.log(notRegisteredCategory);
+            }
 
-    if (!addedCategory) return console.log('Category already registered.');
+            console.log();
+        }
 
-    return console.log(addedCategory);
-  });
+        return console.log(wordRegistered);
+    });
 
-app
-  .command('queryCategories')
-  .description('Return a list of all registered categories.')
-  .action(async () => {
-    const categories = await wordCategoryController.queryCategories();
+app.command("updateEn")
+    .description("Update a English word.")
+    .argument("<enWordSearch>")
+    .option("-u, --update <value>", "Update registered word.")
+    .option(
+        "-a, --append <ptWords...>",
+        "Append Portuguese words to possible translations of the word."
+    )
+    .option(
+        "-ac, --append-categories <categories...>",
+        "Append existing categories to word set of categories"
+    )
+    .action(async (enWordSearch, opt) => {
+        if (opt.append) {
+            const enWordId = await englishController.getWordId(enWordSearch);
 
-    if (!categories.length) return console.log('No categories registered.');
+            if (!enWordId)
+                return console.log(`${enWordSearch} is not registered.`);
 
-    console.log('Registered categories:\n');
+            const notRegisteredPtWords: string[] = [];
 
-    for (const category of categories) {
-      console.log(category.category);
-    }
-  });
+            for (const ptWord of opt.append) {
+                const ptWordId = await portugueseController.getWordId(ptWord);
 
-app
-  .command('updateCategory')
-  .description('Update a provided category to a new value.')
-  .argument('<searchValue>')
-  .argument('<newValue>')
-  .action(async (searchValue, newValue) => {
-    const updatedCategory: string = await wordCategoryController.updateCategory(
-      searchValue,
-      newValue
-    );
+                if (!ptWordId) {
+                    notRegisteredPtWords.push(ptWord);
+                    continue;
+                }
 
-    return console.log(updatedCategory);
-  });
+                await englishController.appendTranslation(
+                    enWordId._id,
+                    ptWordId._id
+                );
+            }
 
-app
-  .command('deleteCategory')
-  .description("Deletes a provided category if it's already registered")
-  .argument('<category>')
-  .action(async (category) => {
-    const deletedCategory = await wordCategoryController.deleteCategory(
-      category
-    );
+            if (notRegisteredPtWords.length)
+                return console.log(
+                    `The following words are not registered: `,
+                    notRegisteredPtWords
+                );
 
-    return console.log(deletedCategory);
-  });
+            return console.log("Translations added");
+        }
+
+        if (opt.update) {
+            const wordRegistered = await englishController.updateWord(
+                enWordSearch,
+                opt,
+                []
+            );
+
+            return console.log(wordRegistered);
+        }
+
+        if (opt.appendCategories) {
+            const notRegisteredCategories: string[] = [];
+
+            const categoriesToAdd: ObjectId[] = [];
+            for (const category of opt.appendCategories) {
+                const [categoryRegistered] =
+                    await wordCategoryController.queryCategories(category);
+
+                if (!categoryRegistered) notRegisteredCategories.push(category);
+
+                if (categoryRegistered)
+                    categoriesToAdd.push(categoryRegistered._id);
+            }
+
+            const wordRegistered: string = await englishController.updateWord(
+                enWordSearch,
+                { update: enWordSearch },
+                categoriesToAdd
+            );
+
+            if (notRegisteredCategories.length) {
+                console.log(
+                    "The following categories couldn't be added because they aren't registered:\n"
+                );
+
+                for (const notRegisteredCategory of notRegisteredCategories) {
+                    console.log(notRegisteredCategory);
+                }
+
+                console.log();
+            }
+
+            return console.log(wordRegistered);
+        }
+    });
+
+app.command("searchWord")
+    .description(
+        "Search for a portuguese or english word and it's translations, default search for english words."
+    )
+    .argument("<word>")
+    .requiredOption(
+        "-l, --language <pt | en>",
+        "Select between pt or en to search for translations.",
+        "en"
+    )
+    .action(async (word, opt, a) => {
+        if (opt.language === "en") {
+            const enWord: Document | string = await englishController.queryWord(
+                word
+            );
+
+            if (typeof enWord === "string") return console.log(enWord);
+
+            console.log(`Possible translations for ${word}:`);
+
+            for (const ptWord of enWord.ptWords) {
+                console.log(`\n${ptWord.ptWord}`);
+            }
+        }
+
+        if (opt.language === "pt") {
+            const ptWord = await portugueseController.queryWord(word);
+
+            if (typeof ptWord === "string") return console.log(ptWord);
+
+            console.log(`Possible translations for ${word}:`);
+
+            for (const enWord of ptWord.enWords) {
+                console.log(`\n${enWord.word}`);
+            }
+        }
+
+        return;
+    });
+
+app.command("searchWordByCategory")
+    .description("Search for a collection of words based on a category")
+    .argument("<category>")
+    .requiredOption(
+        "-l, --language <pt | en>",
+        "Select between pt or en to search for translations.",
+        "pt"
+    )
+    .action(async (category, opt) => {
+        if (opt.language === "pt") {
+            const [categoryFound] =
+                await wordCategoryController.queryCategories(category);
+
+            if (!categoryFound)
+                return console.log(`Category ${category} doesn't exist.`);
+
+            const words = await portugueseController.queryWordByCategory(
+                categoryFound._id
+            );
+
+            console.log(`Words found in the ${category} category.\n`);
+
+            for (const word of words) {
+                console.log(word.ptWord);
+            }
+        }
+
+        if (opt.language === "en") {
+            const [categoryFound] =
+                await wordCategoryController.queryCategories(category);
+
+            if (!categoryFound)
+                return console.log(`Category ${category} doesn't exist.`);
+
+            const words = await englishController.queryWordByCategory(
+                categoryFound._id
+            );
+
+            console.log(`Words found in the ${category} category.\n`);
+
+            for (const word of words) {
+                console.log(word.word);
+            }
+        }
+    });
+
+app.command("addCategory")
+    .description(
+        "Add new word categories that you can search for to train specific subjects of your vocabular."
+    )
+    .argument("<category>")
+    .action(async (category) => {
+        const addedCategory = await wordCategoryController.addCategory(
+            category
+        );
+
+        if (!addedCategory) return console.log("Category already registered.");
+
+        return console.log(addedCategory);
+    });
+
+app.command("queryCategories")
+    .description("Return a list of all registered categories.")
+    .action(async () => {
+        const categories = await wordCategoryController.queryCategories();
+
+        if (!categories.length) return console.log("No categories registered.");
+
+        console.log("Registered categories:\n");
+
+        for (const category of categories) {
+            console.log(category.category);
+        }
+    });
+
+app.command("updateCategory")
+    .description("Update a provided category to a new value.")
+    .argument("<searchValue>")
+    .argument("<newValue>")
+    .action(async (searchValue, newValue) => {
+        const updatedCategory: string =
+            await wordCategoryController.updateCategory(searchValue, newValue);
+
+        return console.log(updatedCategory);
+    });
+
+app.command("deleteCategory")
+    .description("Deletes a provided category if it's already registered")
+    .argument("<category>")
+    .action(async (category) => {
+        const deletedCategory = await wordCategoryController.deleteCategory(
+            category
+        );
+
+        return console.log(deletedCategory);
+    });
 
 app.parse();

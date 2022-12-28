@@ -1,47 +1,51 @@
-import PortugueseInjector from '../injectors/portugueseInjector';
-import { ObjectId } from 'mongodb';
+import PortugueseInjector from "../injectors/portugueseInjector";
+import { ObjectId } from "mongodb";
 
 class PortugueseController {
-  ptInjector;
+    ptInjector;
 
-  constructor(portugueseInjector: typeof PortugueseInjector) {
-    this.ptInjector = portugueseInjector;
-  }
+    constructor(portugueseInjector: typeof PortugueseInjector) {
+        this.ptInjector = portugueseInjector;
+    }
 
-  async addWord(ptWord: string, categories: ObjectId[] = []) {
-    const portugueseWord = this.ptInjector.makeWord(ptWord, categories);
+    async addWord(ptWord: string, categories: ObjectId[] = []) {
+        const portugueseWord = this.ptInjector.makeWord(ptWord, categories);
 
-    return await this.ptInjector.addWord(portugueseWord);
-  }
+        return await this.ptInjector.addWord(portugueseWord);
+    }
 
-  async getWordId(ptWord: string) {
-    return await this.ptInjector.getWordId(ptWord);
-  }
+    async getWordId(ptWord: string) {
+        return await this.ptInjector.getWordId(ptWord);
+    }
 
-  async updateWord(
-    ptWordSearch: string,
-    { newValue }: { newValue: string },
-    categoriesToAdd: ObjectId[]
-  ) {
-    const updatedTranslation = await this.ptInjector.updateWord(
-      ptWordSearch,
-      newValue,
-      categoriesToAdd
-    );
+    async updateWord(
+        ptWordSearch: string,
+        { newValue }: { newValue: string },
+        categoriesToAdd: ObjectId[]
+    ) {
+        const updatedTranslation = await this.ptInjector.updateWord(
+            ptWordSearch,
+            newValue,
+            categoriesToAdd
+        );
 
-    if (updatedTranslation.modifiedCount === 0)
-      return `${ptWordSearch} is not registered.`;
+        if (updatedTranslation.modifiedCount === 0)
+            return `${ptWordSearch} is not registered.`;
 
-    return `${ptWordSearch} updated.`;
-  }
+        return `${ptWordSearch} updated.`;
+    }
 
-  async queryWord(word: string) {
-    const searchedWord = await this.ptInjector.queryWord(word);
+    async queryWord(word: string) {
+        const searchedWord = await this.ptInjector.queryWord(word);
 
-    if (!searchedWord.length) return `${word} not found.`;
+        if (!searchedWord.length) return `${word} not found.`;
 
-    return searchedWord[0];
-  }
+        return searchedWord[0];
+    }
+
+    async queryWordByCategory(categoryId: ObjectId) {
+        return await this.ptInjector.queryWordByCategory(categoryId);
+    }
 }
 
 export default PortugueseController;
