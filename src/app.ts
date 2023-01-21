@@ -164,7 +164,7 @@ app.command("updatePt")
 
         const wordRegistered: string = await portugueseController.updateWord(
             ptWordSearch,
-            opt.newValue ? opt.newValue : { newValue: ptWordSearch },
+            opt.newValue ? opt : { newValue: ptWordSearch },
             categoriesToAdd
         );
 
