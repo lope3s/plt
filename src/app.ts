@@ -22,103 +22,44 @@ app.name("Personal Language Trainer - PLT\n").description(
     "CLI to help expand english vocabulary"
 );
 
-app.command("addPt")
-    .description("Add a Portuguese word.")
-    .argument("<ptWords...>")
-    .option(
-        "-ct, --category <value>",
-        "Will add the provided category to word category set, if caregory exists."
-    )
-    .action(async (ptWords, { category }) => {
-        const alreadyRegisteredWords: string[] = [];
-
-        if (category) {
-            const [categoryRegistered] =
-                await wordCategoryController.queryCategories(category);
-
-            if (!categoryRegistered)
-                return console.log("Category not registered.");
-
-            for (const ptWord of ptWords) {
-                const wordResgistered = await portugueseController.addWord(
-                    ptWord,
-                    [categoryRegistered._id]
-                );
-
-                if (!wordResgistered)
-                    alreadyRegisteredWords.push(ptWord.toLowerCase());
-            }
-        }
-
-        if (!category) {
-            for (const ptWord of ptWords) {
-                const wordResgistered = await portugueseController.addWord(
-                    ptWord
-                );
-
-                if (!wordResgistered)
-                    alreadyRegisteredWords.push(ptWord.toLowerCase());
-            }
-        }
-
-        if (alreadyRegisteredWords.length)
-            console.log(
-                "The following words have already been registered: ",
-                alreadyRegisteredWords
-            );
-
-        console.log(
-            `Registered count: ${
-                ptWords.length - alreadyRegisteredWords.length
-            }`
-        );
-        return;
-    });
-
 app.command("addEn")
     .description("Add a English word.")
-    .argument("<ptWord>")
     .argument("<enWords...>")
+    .requiredOption("-pt, --ptWords <ptWords...>", "Need to have the same number of words as the enWords provided, if the word doesn't exist, it will be created.")
     .option(
         "-ct, --category <value>",
         "Will add the provided category to word category set, if caregory exists."
     )
-    .action(async (ptWord, enWords, { category }) => {
-        const ptWordRegistered = await portugueseController.getWordId(ptWord);
+    .action(async (enWords, { category, ptWords }) => {
+        if (ptWords.length !== enWords.length) {
+            return console.log("The number of words provided doesn't match")
+        }
 
-        if (!ptWordRegistered)
-            return console.log(`${ptWord} is not registered.`);
-
-        const alreadyRegisteredWords: string[] = [];
+        const categoryId: ObjectId[] = []
 
         if (category) {
             const [categoryRegistered] =
                 await wordCategoryController.queryCategories(category);
 
-            if (!categoryRegistered)
-                return console.log("Category not registered.");
-
-            for (const enWord of enWords) {
-                const wordRegistered = await englishController.addWord(
-                    enWord,
-                    [ptWordRegistered._id],
-                    [categoryRegistered._id]
-                );
-
-                if (!wordRegistered)
-                    alreadyRegisteredWords.push(enWord.toLowerCase());
-            }
+            if (categoryRegistered) categoryId.push(categoryRegistered._id)
         }
 
-        if (!category) {
-            for (const enWord of enWords) {
-                const wordRegistered = await englishController.addWord(enWord, [
-                    ptWordRegistered._id,
-                ]);
+        const alreadyRegisteredWords: string[] = [];
 
-                if (!wordRegistered)
-                    alreadyRegisteredWords.push(enWord.toLowerCase());
-            }
+        for (const ptWordIndex in ptWords) {
+            const ptWord = ptWords[ptWordIndex]
+            const enWord = enWords[ptWordIndex]
+
+            const ptWordId = await portugueseController.findOrCreate(ptWord, categoryId)
+
+            const wordRegistered = await englishController.addWord(
+                enWord,
+                [ptWordId],
+                categoryId
+            );
+
+            if (!wordRegistered)
+                alreadyRegisteredWords.push(enWord.toLowerCase());
         }
 
         if (alreadyRegisteredWords.length)

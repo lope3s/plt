@@ -18,6 +18,7 @@ describe("Testing portugueseController", () => {
         })),
         queryWord: null,
         queryWordByCategory: jest.fn(async (categoryId: ObjectId) => []),
+        findOrCreate: null
     };
 
     const portugueseController = new PortugueseController(ptInjector);
@@ -165,4 +166,21 @@ describe("Testing portugueseController", () => {
             expect(words).toStrictEqual([]);
         });
     });
+
+    describe("Testing findOrCreateMethod", () => {
+        const returnedId =  new ObjectId()
+        ptInjector.findOrCreate = jest.fn(async (ptWord: string, categories: ObjectId[]) => returnedId);
+
+        it("Should call the queryWordByCategory method", async () => {
+            await portugueseController.findOrCreate("TEST", []);
+
+            expect(ptInjector.findOrCreate).toBeCalledTimes(1);
+            expect(ptInjector.findOrCreate).toBeCalledWith("TEST", []);
+        });
+
+        it("Should return the same result as the injector", async () => {
+            const id = await portugueseController.findOrCreate("TEST", []);
+            expect(id).toStrictEqual(returnedId);
+        });
+    })
 });

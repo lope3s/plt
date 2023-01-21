@@ -86,6 +86,20 @@ class PortugueseService {
             })
             .toArray();
     }
+
+    async findOrCreate(ptWord: string, categories: ObjectId[]) {
+        const portugueseWordDb = await this.coll.findOne({
+            ptWord: ptWord.toLowerCase(),
+        });
+
+        if (portugueseWordDb) return portugueseWordDb._id;
+
+        const portugueseWord = new PortugueseWord(ptWord, categories)
+
+        const insertedWord = await this.coll.insertOne(portugueseWord)
+
+        return insertedWord.insertedId
+    }
 }
 
 export default PortugueseService;

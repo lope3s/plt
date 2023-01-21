@@ -40,6 +40,11 @@ class PortugueseInjector {
         const ptService = new PortugueseService(db.collection("ptWords"));
         return await ptService.queryByCategory(categoryId);
     }
+
+    static async findOrCreate(ptWord: string, categories: ObjectId[]) {
+        const ptService = new PortugueseService(db.collection("ptWords"));
+        return await ptService.findOrCreate(ptWord, categories);
+    }
 }
 
 export default PortugueseInjector;

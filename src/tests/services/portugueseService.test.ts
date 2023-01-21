@@ -146,4 +146,46 @@ describe("Testing Portuguese Service", () => {
             });
         });
     });
+
+    describe("Testing findOrCreate method", () => {
+        it("Should call the findOne method", async() => {
+            coll.findOne = jest.fn(async (ptWord: string) => null);
+
+            await portugueseService.findOrCreate("TEST", [])
+
+            expect(coll.findOne).toBeCalledTimes(1)
+            expect(coll.findOne).toBeCalledWith({
+                ptWord: "test"
+            })
+        })
+
+        it("Should call the insetOne method", async() => {
+            await portugueseService.findOrCreate("TEST", [])
+
+            expect(coll.insertOne).toBeCalledTimes(1)
+            expect(coll.insertOne).toBeCalledWith({
+                ptWord: "test",
+                categories: []
+            })
+        })
+
+        it("Should return the id if the word exist", async() => {
+            const expectedReturnedId = new ObjectId()
+            coll.findOne = jest.fn(async (ptWord: string) => ({_id: expectedReturnedId}));
+
+            const id = await portugueseService.findOrCreate("TEST", [])
+
+            expect(id).toStrictEqual(expectedReturnedId)
+        }) 
+
+        it("Should return the inserted id if the word was inserted", async() => {
+            const expectedInsertedId = new ObjectId()
+            coll.findOne = jest.fn(async (ptWord: string) => null);
+            coll.insertOne = jest.fn(async (ptWord: PortugueseWord) => ({insertedId: expectedInsertedId}))
+
+            const id = await portugueseService.findOrCreate("TEST", [])
+
+            expect(id).toStrictEqual(expectedInsertedId)
+        })
+    })
 });

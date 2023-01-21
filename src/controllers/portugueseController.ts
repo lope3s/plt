@@ -46,6 +46,10 @@ class PortugueseController {
     async queryWordByCategory(categoryId: ObjectId) {
         return await this.ptInjector.queryWordByCategory(categoryId);
     }
+
+    async findOrCreate(ptWord: string, categories: ObjectId[]) {
+        return await this.ptInjector.findOrCreate(ptWord, categories)
+    }
 }
 
 export default PortugueseController;
